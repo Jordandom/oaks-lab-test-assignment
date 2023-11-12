@@ -1,9 +1,7 @@
-import { Heading } from '@components/heading';
-
-export const Card = () => {
+export const Card = ({ children }: { children: React.ReactNode }) => {
   return (
-    <div className="max-w-sm rounded-lg border border-gray-200 bg-white p-6 shadow">
-      <Heading title="My startup progress" />
+    <div className="flex max-w-md flex-col gap-8 rounded-lg border border-gray-200 p-6 shadow">
+      {children}
     </div>
   );
 };
