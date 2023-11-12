@@ -2,6 +2,7 @@ import { Heading } from '@components/heading';
 import { TaskCreateForm } from '@components/task-create-form';
 import { TaskList } from '@components/task-list';
 import { memo, useCallback, useState } from 'react';
+import { toast } from 'sonner';
 import { usePhaseActions, usePhaseById } from 'store';
 import { ProgressState, TaskChangeEvent } from 'types';
 
@@ -24,9 +25,9 @@ const PhaseComponent = ({ phaseName }: PhaseProps) => {
         else throw new Error(`Invalid task status '${progress}'.`);
       } catch (error) {
         if (error instanceof Error) {
-          alert(error.message);
+          toast.error(error.message);
         } else {
-          alert(`An unexpected error occurred: ${error}}`);
+          toast.error(`An unexpected error occurred: ${error}`);
         }
       }
     },
@@ -38,7 +39,7 @@ const PhaseComponent = ({ phaseName }: PhaseProps) => {
       createTask(phaseName, taskName);
     } catch (err) {
       const error = err as Error;
-      alert(error.message);
+      toast.error(error.message);
     }
   };
 
