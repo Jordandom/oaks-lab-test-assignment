@@ -1,129 +1,113 @@
-import { generateUniqueId } from '@utils/helpers';
+import { generateId } from '@utils/helpers';
 import { produce } from 'immer';
-import { Phase, Task } from 'types';
+import { Phase, ProgressState } from 'types';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-
-const initialPhases: Phase[] = [
-  {
-    id: 'foundation',
-    order: 1,
-    isCompleted: false,
-    tasks: [],
-  },
-  {
-    id: 'discovery',
-    order: 3,
-    isCompleted: false,
-    tasks: [],
-  },
-  {
-    id: 'delivery',
-    order: 4,
-    isCompleted: false,
-    tasks: [],
-  },
-];
 
 type Store = {
   phases: Phase[];
   actions: {
-    addTaskToPhase: (phaseId: string, taskName: string) => void;
-    toggleTaskCompletion: (phaseId: string, taskId: string) => void;
-    isPreviousPhaseCompleted: (currentPhaseId: string) => boolean;
-    resetPhases: () => void;
+    addTask: (phaseName: string, taskName: string) => void;
+    toggleTaskCompletion: (phaseName: string, taskId: string) => void;
+    resetAllTasks: () => void;
   };
 };
 
-const findPhaseById = (phases: Phase[], phaseId: string): Phase => {
-  const phase = phases.find((phase) => phase.id === phaseId);
-  if (!phase) throw new Error(`Phase with ID '${phaseId}' not found.`);
+function findPhase(phases: Phase[], phaseId: string) {
+  const phase = phases.find((phase) => phase.name === phaseId);
+  if (!phase) throw new Error(`Phase '${phaseId}' not found.`);
   return phase;
-};
+}
 
-const areAllTasksCompleted = (tasks: Task[]): boolean =>
-  tasks.every((task) => task.isCompleted);
+function addTask(phases: Phase[], phaseId: string, taskName: string) {
+  return produce(phases, (draft) => {
+    const phase = findPhase(draft, phaseId);
+    phase.tasks.push({
+      id: generateId(),
+      name: taskName,
+      progress: ProgressState.New,
+    });
+  });
+}
 
-const toggleTaskCompletion = (
+function toggleTaskCompletion(
   phases: Phase[],
   phaseId: string,
   taskId: string
-): Phase[] =>
-  produce(phases, (draft) => {
-    const phase = findPhaseById(draft, phaseId);
+) {
+  return produce(phases, (draft) => {
+    const phase = findPhase(draft, phaseId);
+    const task = phase.tasks.find((task) => task.id === taskId);
+    if (!task) throw new Error(`Task '${taskId}' not found.`);
 
-    if (phase.tasks.length === 0) {
-      throw new Error(`No tasks found in phase '${phaseId}'.`);
+    // Toggle the task's completion state
+    if (task.progress === ProgressState.New) {
+      // Complete the task
+      const previousPhase = draft.find((i) => i.order === phase.order - 1);
+      if (!isPhaseCompleted(previousPhase)) {
+        throw new Error(
+          `You have to complete all tasks in '${previousPhase?.name}' phase first.`
+        );
+      }
+      task.progress = ProgressState.Completed;
+    } else if (task.progress === ProgressState.Completed) {
+      // Undo the task
+      if (isPhaseCompleted(phase))
+        throw new Error(
+          `You can't undo the task '${task.name}' because '${phaseId}' phase has been completed.`
+        );
+      task.progress = ProgressState.New;
     }
 
-    const taskIndex = phase.tasks.findIndex((task) => task.id === taskId);
-
-    if (taskIndex === -1) {
-      throw new Error(
-        `Task with ID '${taskId}' not found in phase '${phaseId}'.`
-      );
-    }
-
-    phase.tasks[taskIndex] = {
-      ...phase.tasks[taskIndex],
-      isCompleted: !phase.tasks[taskIndex].isCompleted,
-    };
-
-    if (areAllTasksCompleted(phase.tasks)) {
-      phase.isCompleted = true;
-    }
+    // Update phase completion status
+    phase.completed = phase.tasks.every(
+      (t) => t.progress === ProgressState.Completed
+    );
   });
+}
 
-const addTaskToPhase = (
-  phases: Phase[],
-  phaseId: string,
-  taskName: string
-): Phase[] =>
-  produce(phases, (draft) => {
-    const phase = findPhaseById(draft, phaseId);
-    phase.tasks.push({
-      id: generateUniqueId(),
-      name: taskName,
-      isCompleted: false,
-    });
-  });
+function isPhaseCompleted(phase: Phase | undefined) {
+  // Undefined phase is considered as completed
+  if (!phase) return true;
+
+  return (
+    phase.tasks.every((task) => task.progress === ProgressState.Completed) &&
+    phase.completed
+  );
+}
+
+const initialPhases: Phase[] = [
+  { name: 'Foundation', completed: false, order: 1, tasks: [] },
+  { name: 'Discovery', completed: false, order: 2, tasks: [] },
+  { name: 'Delivery', completed: false, order: 3, tasks: [] },
+];
 
 const useStore = create<Store>()(
   persist(
-    (set, get) => ({
+    (set) => ({
       phases: initialPhases,
       actions: {
-        addTaskToPhase: (phaseId, taskName) =>
+        addTask: (phaseId, taskName) =>
           set((state) => ({
-            phases: addTaskToPhase(state.phases, phaseId, taskName),
+            phases: addTask(state.phases, phaseId, taskName),
           })),
         toggleTaskCompletion: (phaseId, taskId) =>
           set((state) => ({
             phases: toggleTaskCompletion(state.phases, phaseId, taskId),
           })),
-        isPreviousPhaseCompleted: (currentPhaseId) => {
-          const phases = get().phases;
-          const currentPhaseIndex = phases.findIndex(
-            (phase) => phase.id === currentPhaseId
-          );
-
-          // If the current phase is the first one, or not found, previous phase is considered completed
-          if (currentPhaseIndex <= 0) return true;
-
-          const previousPhase = phases[currentPhaseIndex - 1];
-          return previousPhase.isCompleted;
-        },
-        resetPhases: () => set({ phases: initialPhases }),
+        resetAllTasks: () => set({ phases: initialPhases }),
       },
     }),
     {
       name: 'phases-store',
-      partialize: (state) => ({ phases: state.phases }),
+      partialize: ({ phases }) => ({
+        phases,
+      }),
     }
   )
 );
 
 export const usePhases = () => useStore((state) => state.phases);
 export const usePhase = (phaseId: string) =>
-  useStore((state) => state.phases.find((phase) => phase.id === phaseId));
-export const usePhaseActions = () => useStore((state) => state.actions);
+  useStore((state) => state.phases.find((phase) => phase.name === phaseId));
+export const useActions = () => useStore((state) => state.actions);

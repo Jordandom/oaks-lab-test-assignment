@@ -1,17 +1,24 @@
 export type Phase = {
-  id: string;
-  tasks: Task[];
+  name: string;
   order: number;
-  isCompleted: boolean;
+  tasks: Task[];
+  completed: boolean;
 };
+
+export enum ProgressState {
+  New = 'new',
+  Completed = 'completed',
+}
+
+export type TaskProgress = ProgressState;
 
 export type Task = {
   id: string;
   name: string;
-  isCompleted: boolean;
+  progress: TaskProgress;
 };
 
 export type TaskChangeEvent = {
   id: string;
-  isCompleted: boolean;
+  progress: TaskProgress;
 };
