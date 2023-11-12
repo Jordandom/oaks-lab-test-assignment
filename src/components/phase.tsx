@@ -44,11 +44,13 @@ const PhaseComponent = ({ phaseName }: PhaseProps) => {
 
   return (
     <>
-      <div className="flex items-center gap-4">
-        <span className="flex h-10 w-10 items-center justify-center rounded-full bg-black text-white">
-          {phase?.order}
-        </span>
-        <Heading size="m" title={phase?.name} />
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-black text-white">
+            {phase?.order}
+          </div>
+          <Heading size="m" title={phase?.name} />
+        </div>
         {phase?.completed ? (
           <svg
             xmlns="http://www.w3.org/2000/svg"
