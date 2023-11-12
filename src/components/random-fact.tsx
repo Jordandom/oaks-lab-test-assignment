@@ -1,5 +1,6 @@
 import { useRandomFact } from '@hooks/use-random-fact';
 import { useCallback } from 'react';
+import { toast } from 'sonner';
 import { usePhaseActions } from 'store';
 
 export const RandomFact = () => {
@@ -7,15 +8,20 @@ export const RandomFact = () => {
   const { resetTasks } = usePhaseActions();
 
   const handleStartNewStartup = useCallback(() => {
-    if (
-      window.confirm(
-        'This will reset your progress and start fresh. Are you sure you want to proceed?'
-      )
-    ) {
-      resetTasks();
-      resetFact();
-    }
-  }, [resetTasks, resetFact]);
+    toast(
+      'This will reset your progress and start fresh. Are you sure you want to proceed?',
+      {
+        duration: 10_000,
+        action: {
+          label: 'Confirm',
+          onClick: () => {
+            resetTasks();
+            resetFact();
+          },
+        },
+      }
+    );
+  }, [resetFact, resetTasks]);
 
   if (error) {
     return <p className="text-sm font-semibold text-red-600">Error: {error}</p>;
