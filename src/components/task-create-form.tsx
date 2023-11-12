@@ -1,9 +1,9 @@
-type AddTaskFormProps = {
+type TaskCreateFormProps = {
   onClose: () => void;
   onSubmit: ({ taskName }: { taskName: string }) => void;
 };
 
-export const AddTask = ({ onClose, onSubmit }: AddTaskFormProps) => {
+export const TaskCreateForm = ({ onClose, onSubmit }: TaskCreateFormProps) => {
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 

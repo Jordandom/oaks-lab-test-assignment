@@ -1,4 +1,5 @@
 import { Card } from '@components/card';
+import { Heading } from '@components/heading';
 import { RandomFact } from '@components/random-fact';
 import { Phase } from 'components/phase';
 import { usePhases } from 'store';
@@ -10,11 +11,12 @@ const App = () => {
     <div className="flex h-screen flex-col items-center bg-white px-40 py-20">
       <RandomFact />
       <Card>
-        {phases.map(({ name }, index) => (
-          <div key={name} className={index !== 0 ? 'mt-8' : 'mt-0'}>
-            <Phase phaseName={name} />
-          </div>
-        ))}
+        <Heading title="My startup progress" size="s" />
+        <div className="flex flex-col gap-8">
+          {phases.map(({ name }) => (
+            <Phase key={name} phaseName={name} />
+          ))}
+        </div>
       </Card>
     </div>
   );

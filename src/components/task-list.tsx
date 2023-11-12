@@ -29,6 +29,8 @@ const TaskItem = ({
     <div className="flex items-center gap-2">
       <input
         type="checkbox"
+        id={task.id}
+        name={task.name}
         checked={task.progress === ProgressState.Completed}
         onChange={(event) =>
           onTaskChange({
@@ -39,7 +41,7 @@ const TaskItem = ({
           })
         }
       />
-      {task.name}
+      <label htmlFor={task.id}>{task.name}</label>
     </div>
   );
 };

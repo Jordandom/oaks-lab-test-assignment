@@ -1,72 +1,42 @@
-import { fetchFunFact } from '@utils/helpers';
-import { useCallback, useEffect, useState } from 'react';
-import { useActions, usePhases } from 'store';
-
-// Custom hook to fetch a fun fact when all phases are completed
-const useRandomFact = () => {
-  const phases = usePhases(); // destructuring to get phases directly
-  const [randomFact, setRandomFact] = useState<string>('');
-  const [error, setError] = useState<string>('');
-
-  useEffect(() => {
-    // AbortController is used to cancel the fetch request when the component is unmounted or when the phases dependency array changes before the fetch completes. This is a common pattern to avoid state updates on unmounted components and potential memory leaks.
-    const abortController = new AbortController();
-
-    if (phases.every((phase) => phase.completed)) {
-      fetchFunFact(
-        'https://uselessfacts.jsph.pl/random.json',
-        abortController.signal
-      )
-        .then(setRandomFact)
-        .catch((error) => {
-          if (error.name !== 'AbortError') {
-            setError(error.message);
-          }
-        });
-    }
-
-    return () => {
-      abortController.abort();
-    };
-  }, [phases]);
-
-  const resetFact = useCallback(() => {
-    setRandomFact('');
-    setError('');
-  }, []);
-
-  return { randomFact, error, resetFact };
-};
+import { useRandomFact } from '@hooks/use-random-fact';
+import { useCallback } from 'react';
+import { usePhaseActions } from 'store';
 
 export const RandomFact = () => {
   const { randomFact, error, resetFact } = useRandomFact();
-  const { resetAllTasks } = useActions();
+  const { resetTasks } = usePhaseActions();
 
   const handleStartNewStartup = useCallback(() => {
     if (
       window.confirm(
-        'Are you sure you want to start a new startup? This action will delete all tasks.'
+        'This will reset your progress and start fresh. Are you sure you want to proceed?'
       )
     ) {
-      resetAllTasks();
+      resetTasks();
       resetFact();
     }
-  }, [resetAllTasks, resetFact]);
+  }, [resetTasks, resetFact]);
 
   if (error) {
-    return <p className="TODO">Error: {error}</p>; // Using a generic error class for styling
+    return <p className="text-sm font-semibold text-red-600">Error: {error}</p>;
   }
 
   if (!randomFact) return null;
 
   return (
-    <div className="TODO">
-      <p>
-        Congratulations! You have finished the last phase of your startup! 🎉
-        Let's take a break and enjoy this fun fact:
+    <div className="mx-auto mt-4 max-w-lg rounded-lg bg-white p-6 shadow-lg">
+      <p className="mb-4 text-base text-gray-700">
+        Amazing work! You have successfully completed your startup journey. 🌟
+        As a reward, here is an interesting fact to enjoy during your
+        well-deserved break:
       </p>
-      <p className="TODO">{randomFact}</p>
-      <button onClick={handleStartNewStartup}>Start a new Startup</button>
+      <p className="mb-6 font-medium text-indigo-600">{randomFact}</p>
+      <button
+        onClick={handleStartNewStartup}
+        className="rounded bg-blue-500 px-4 py-2 font-bold text-white hover:bg-blue-700"
+      >
+        Initiate New Startup
+      </button>
     </div>
   );
 };
