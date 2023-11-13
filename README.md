@@ -1,6 +1,6 @@
 # OAK'S LAB assignment - TODO App
 
-## [Demo](https://oaks-lab-test-assignment.vercel.app/)
+## Here is live [preview](https://oaks-lab-test-assignment.vercel.app/)
 
 ## Introduction
 
