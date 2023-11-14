@@ -11,12 +11,8 @@ export const useRandomFact = () => {
   const [randomFact, setRandomFact] = useState<string>('');
   const [error, setError] = useState<string>('');
 
-  useEffect(() => {
-    // AbortController is used to cancel the fetch request when the component is unmounted or when the phases dependency array changes before the fetch completes. This is a common pattern to avoid state updates on unmounted components and potential memory leaks.
-    const abortController = new AbortController();
-    const { signal } = abortController;
-
-    const fetchFact = async () => {
+  const fetchFact = useCallback(
+    async (signal: AbortSignal) => {
       if (phases.every((phase) => phase.completed)) {
         try {
           const fact = await fetchRandomFact(
@@ -32,19 +28,26 @@ export const useRandomFact = () => {
           }
         }
       }
-    };
-
-    fetchFact();
-
-    return () => {
-      abortController.abort();
-    };
-  }, [phases]);
+    },
+    [phases]
+  );
 
   const resetFact = useCallback(() => {
     setRandomFact('');
     setError('');
   }, []);
+
+  useEffect(() => {
+    // AbortController is used to cancel the fetch request when the component is unmounted or when the phases dependency array changes before the fetch completes. This is a common pattern to avoid state updates on unmounted components and potential memory leaks.
+    const abortController = new AbortController();
+    const { signal } = abortController;
+
+    fetchFact(signal);
+
+    return () => {
+      abortController.abort();
+    };
+  }, [fetchFact, phases]);
 
   return { randomFact, error, resetFact };
 };
